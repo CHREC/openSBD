@@ -1,0 +1,54 @@
+diff --git a/osal/src/os/posix/osapi.c b/osal/src/os/posix/osapi.c
+index c2c0785..181983b 100644
+
+# Copyright (c) 2018 NSF Center for Space, High-performance, and Resilient Computing (SHREC)
+# University of Pittsburgh. All rights reserved.
+
+# Redistribution and use in source and binary forms, with or without modification, are permitted provided
+# that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+# INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+# OF SUCH DAMAGE.
+--- a/osal/src/os/posix/osapi.c
++++ b/osal/src/os/posix/osapi.c
+@@ -773,6 +773,7 @@ int32 OS_TaskCreate (uint32 *task_id, const char *task_name, osal_task_entry fun
+     ** Test to see if the user is running as root.
+     ** root is required to set the scheduling policy, stack, and priority
+     */
++#if 0 /* FIXME: Scheduling bug when used with DDS. */
+     if (geteuid() == 0 )
+     {
+        /*
+@@ -827,6 +828,7 @@ int32 OS_TaskCreate (uint32 *task_id, const char *task_name, osal_task_entry fun
+        }
+ 
+     } /* End if user is root */
++#endif
+ 
+     /*
+     ** Create thread
+@@ -1058,6 +1060,7 @@ int32 OS_TaskSetPriority (uint32 task_id, uint32 new_priority)
+     /* Change OSAL priority into a priority that will work for this OS */
+     os_priority = OS_PriorityRemap(new_priority);
+ 
++#if 0 /* FIXME: Scheduling bug when used with DDS. */
+     if (geteuid() == 0 )
+     {
+        /* 
+@@ -1073,6 +1076,7 @@ int32 OS_TaskSetPriority (uint32 task_id, uint32 new_priority)
+           return(OS_ERROR);
+        }
+     }
++#endif
+ 
+     /* Use the abstracted priority, not the OS one */
+     /* Change the priority in the table as well */

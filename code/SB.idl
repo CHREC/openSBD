@@ -1,0 +1,49 @@
+// Copyright (c) 2018 NSF Center for Space, High-performance, and Resilient Computing (SHREC)
+// University of Pittsburgh. All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided
+// that the following conditions are met:
+// 1. Redistributions of source code must retain the above copyright notice,
+//    this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright notice,
+//    this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+// IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+// OF SUCH DAMAGE.
+//
+// The views and conclusions contained in the software and documentation are
+// those of the authors and should not be interpreted as representing official
+// policies, either expressed or implied, of SHREC.
+//
+// Authors: Christopher Manderino <christopher.manderino@nsf-shrec.org> <cmanderino@gmail.com>
+// Authors: Stephen Snow 
+
+module SB
+{
+  typedef sequence<octet> seq_oct;
+
+  struct Msg
+  {
+    // CCSDS message ID provided for convenience. Maps to a 16 bit integer.
+    unsigned short msg_id;
+    // Indicates if the receiver should modify the sequence count of the
+    // message. See CFE_SB_INCREMENT_TLM and CFE_SB_DO_NOT_INCREMENT.
+    long increment_tlm;
+    // Sender's spacecraft ID. Maps to a 32 bit integer.
+    unsigned long spacecraft_id;
+    // Sender's processor ID. Maps to a 32 bit integer.
+    unsigned long sender_processor_id;
+    // Publishing cFE application's name.
+    string sender_name;
+    // Complete CCSDS message.
+    // TODO
+    seq_oct raw;
+    //unsigned char * raw;
+  };
+  #pragma keylist Msg msg_id
+};

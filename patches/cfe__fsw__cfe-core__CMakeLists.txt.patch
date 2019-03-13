@@ -1,0 +1,56 @@
+diff --git a/cfe/fsw/cfe-core/CMakeLists.txt b/cfe/fsw/cfe-core/CMakeLists.txt
+index dfe3450..29e27f1 100644
+
+# Copyright (c) 2018 NSF Center for Space, High-performance, and Resilient Computing (SHREC)
+# University of Pittsburgh. All rights reserved.
+
+# Redistribution and use in source and binary forms, with or without modification, are permitted provided
+# that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+# INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+# OF SUCH DAMAGE.
+
+--- a/cfe/fsw/cfe-core/CMakeLists.txt
++++ b/cfe/fsw/cfe-core/CMakeLists.txt
+@@ -24,8 +24,32 @@ foreach(MODULE ${CFE_CORE_MODULES} config shared)
+   aux_source_directory(src/${MODULE} CFE_ALL_MODULE_SRCS)
+ endforeach(MODULE ${CFE_CORE_MODULES})
+ 
++##### BEGIN SBD
++get_filename_component(CMAKE_AUX_MODULES_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake" REALPATH)
++set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_AUX_MODULES_PATH})
++find_package(OpenSplice REQUIRED)
++include_directories(
++        ./src/sb/gen
++        ${OpenSplice_INCLUDE_DIRS}
++)
++
++set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fPIC -std=c++11")
++
++set(IDL_FILES src/sb/SB.idl)
++OpenSpliceCompileIdl(IDL_FILES SB_DDS_FILES)
++
++add_library(SBLib STATIC ${SB_DDS_FILES})
++
+ add_library(${CFE_CORE_TARGET} STATIC ${CFE_ALL_MODULE_SRCS})
+ 
++
++target_link_libraries(${CFE_CORE_TARGET}
++        SBLib
++        ${OpenSplice_LIBRARIES}
++        dl
++        )
++##### END SBD
++
+ if(ENABLE_DATA_DICTIONARY)
+   target_link_libraries(${CFE_CORE_TARGET} msglib cfecore_datadict)
+ endif(ENABLE_DATA_DICTIONARY)

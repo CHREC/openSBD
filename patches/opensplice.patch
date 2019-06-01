@@ -1,0 +1,26 @@
+diff --git a/install/HDE/x86.linux/etc/config/ospl.xml b/install/HDE/x86.linux/etc/config/ospl.xml
+index 3058d54..797ce7d 100644
+--- a/install/HDE/x86.linux/etc/config/ospl.xml
++++ b/install/HDE/x86.linux/etc/config/ospl.xml
+@@ -1,7 +1,7 @@
+ <OpenSplice>
+     <Domain>
+         <Name>ospl_sp_ddsi</Name>
+-        <Id>0</Id>
++        <Id>100</Id>
+         <SingleProcess>true</SingleProcess>
+         <Description>Stand-alone 'single-process' deployment and standard DDSI networking.</Description>
+         <Service name="ddsi2">
+diff --git a/install/HDE/x86.linux/etc/config/ospl_sp_ddsi.xml b/install/HDE/x86.linux/etc/config/ospl_sp_ddsi.xml
+index 3058d54..797ce7d 100644
+--- a/install/HDE/x86.linux/etc/config/ospl_sp_ddsi.xml
++++ b/install/HDE/x86.linux/etc/config/ospl_sp_ddsi.xml
+@@ -1,7 +1,7 @@
+ <OpenSplice>
+     <Domain>
+         <Name>ospl_sp_ddsi</Name>
+-        <Id>0</Id>
++        <Id>100</Id>
+         <SingleProcess>true</SingleProcess>
+         <Description>Stand-alone 'single-process' deployment and standard DDSI networking.</Description>
+         <Service name="ddsi2">

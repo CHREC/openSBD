@@ -48,7 +48,7 @@ source $OSPL_HOME/release.com
 
 patch -Np1 -i ../patches/opensplice.patch
 
-cd code
+cd ../code
 make
 cp *.{c,cpp,h} $SBD_HOME/cfe/cfe/fsw/cfe-core/src/sb
 cp $SBD_HOME/code/libSBCommon.so $OSPL_HOME/lib

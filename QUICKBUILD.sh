@@ -1,3 +1,5 @@
+#! /usr/bin/env bash
+
 # Copyright (c) 2018 NSF Center for Space, High-performance, and Resilient Computing (SHREC)
 # University of Pittsburgh. All rights reserved.
 
@@ -16,46 +18,54 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
 # OF SUCH DAMAGE.
 
+# This script should be all that is needed to go from a new clone of openSBD to
+# a running barebones cFE with integrated OpenSplice SBD, assuming all component
+# prerequisites are installed. Tested on Ubuntu 16.04 64-bit.
 #
-# Include paths
-INCLUDES+=-I$(OSPL_HOME)/include/dcps/C++/SACPP
-INCLUDES+=-I$(OSPL_HOME)/include
-INCLUDES+=-I$(OSPL_HOME)/include/sys
+# Note 1:
+# It is recommended that the beginning section (OpenSplice compile) is done
+# manually in case of build errors.
+#
+# Note 2:
+# Enter target 21 (for x86.linux-release) when prompted during OpenSplice configure
 
-# C++ Compiler settings.
-CXX=g++
-CXXFLAGS=-g -c -fPIC -m32
-CPPFLAGS=$(INCLUDES)
+SBD_HOME=$PWD
 
-# Linker settings.
-LD_SO=$(CXX)
-LD_FLAGS=-shared -m32
-LD_LIBS=-lstdc++
+# Download open source cFE and OpenSplice (these are the latest available releases currently)
+git clone -b '6.5.0a' https://github.com/nasa/cfe.git
+git clone -b 'OSPL_V6_9_190403OSS_RELEASE' --depth 1 https://github.com/ADLINK-IST/opensplice.git
 
-TARGET=libSBCommon.so
+# Build OpenSplice
+cd $PWD/opensplice
+export INCLUDE_SERVICES_CMSOAP=no
+source ./configure # Enter target 21 (x86.linux-release)
+make
+make install
 
-# OpenSplice idl preprocessor
-OSPLICE_COMP=$(OSPL_HOME)/bin/idlpp -S -l cpp
+export OSPL_HOME="$SBD_HOME/opensplice/install/HDE/x86.linux"
 
-OSPLICE_LIBS=-lddsdatabase -ldcpsgapi -ldcpssacpp -lddsos -lddskernel
+source $OSPL_HOME/release.com
 
-DCPS_SRC_FILES = SB.cpp SBDcps_impl.cpp SBDcps.cpp SBSplDcps.cpp
-DCPS_OBJ_FILES = $(patsubst %.cpp, %.o, $(DCPS_SRC_FILES))
+patch -Np1 -i ../patches/opensplice.patch
 
-all : $(TARGET)
-	@echo ">>>> all done" 
+cd ../code
+make
+cp *.{c,cpp,h} $SBD_HOME/cfe/cfe/fsw/cfe-core/src/sb
+cp $SBD_HOME/code/libSBCommon.so $OSPL_HOME/lib
+cp $SBD_HOME/code/rtps.ini $SBD_HOME/cfe/build/cpu1/exe
 
-$(TARGET) : $(DCPS_OBJ_FILES)
-	$(LD_SO) $(LD_FLAGS) -L$(OSPL_HOME)/lib $(OSPLICE_LIBS) $(LD_LIBS) -o $(TARGET) $(DCPS_OBJ_FILES)
+cd ../cfe
 
-$(DCPS_SRC_FILES) : SB.idl
-	@echo "Compiling $< with SPLICE IDL compiler"
-	@$(OSPLICE_COMP) $(INCLUDES) $<
+git submodule update --init osal
 
-clean :  
-	@rm -f SB.cpp SB.h SBD* SBS* ccpp_SB.h
-	@rm -f *.o ospl-info.log
-	@rm -f *.so
-	@rm -f bld/*
-	@rmdir bld
+patch -Np1 -i ../patches/sbd.patch
+
+source setvars.sh
+cd build/cpu1
+make realclean
+make config
+make
+cd exe
+cp $SBD_HOME/code/rtps.ini $SBD_HOME/cfe/build/cpu1/exe
+./core-linux.bin
 

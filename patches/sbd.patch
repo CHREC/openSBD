@@ -1,0 +1,162 @@
+diff --git a/cfe/fsw/cfe-core/src/inc/cfe_sb_events.h b/cfe/fsw/cfe-core/src/inc/cfe_sb_events.h
+index e7b0d72..1e9d2a5 100644
+--- a/cfe/fsw/cfe-core/src/inc/cfe_sb_events.h
++++ b/cfe/fsw/cfe-core/src/inc/cfe_sb_events.h
+@@ -789,6 +789,10 @@
+ **/
+ #define CFE_SB_DEL_PIPE_ERR2_EID        54
+ 
++/* Generic DDS event IDs. */
++#define CFE_SB_DDS_INF_EID              55
++#define CFE_SB_DDS_ERR_EID              56
++
+ 
+ #endif /* _cfe_sb_events_ */
+ 
+diff --git a/cfe/fsw/cfe-core/src/make/make-rules.mak b/cfe/fsw/cfe-core/src/make/make-rules.mak
+index 5babe78..f37faca 100644
+--- a/cfe/fsw/cfe-core/src/make/make-rules.mak
++++ b/cfe/fsw/cfe-core/src/make/make-rules.mak
+@@ -16,6 +16,9 @@ default::$(TARGET)
+ .c.o:
+ 	$(COMPILER) $(LOCAL_COPTS) $(INCLUDE_PATH) $(COPTS) $(DEBUG_OPTS) -DOS_DEBUG_LEVEL=$(DEBUG_LEVEL) -c -o $@ $<
+ 
++.cpp.o:
++	$(COMPILER) $(LOCAL_COPTS) $(INCLUDE_PATH) $(COPTS) $(DEBUG_OPTS) -DOS_DEBUG_LEVEL=$(DEBUG_LEVEL) -c -o $@ $<
++
+ ## 
+ ## Assembly Code Rule
+ ##
+diff --git a/cfe/fsw/cfe-core/src/sb/cfe_sb.mak b/cfe/fsw/cfe-core/src/sb/cfe_sb.mak
+index b283a99..60998a0 100644
+--- a/cfe/fsw/cfe-core/src/sb/cfe_sb.mak
++++ b/cfe/fsw/cfe-core/src/sb/cfe_sb.mak
+@@ -7,18 +7,30 @@
+ # History:
+ ###############################################################################
+ 
++# OpenSplice dependencies.
++LOCAL_COPTS = -fPIC -O3 -DNDEBUG -D_REENTRANT -D_POSIX_C_SOURCE=200112L -D_XOPEN_SOURCE=500 \
++ -Wall -Wno-unused-function -I$(OSPL_HOME)/include/dcps/C++/SACPP \
++ -I$(OSPL_HOME)/include/sys -L$(OSPL_HOME)/lib \
++ -std=c++11
++
+ # Subsystem produced by this makefile.
+ TARGET = sb.o
+ 
+ #==============================================================================
+ # Object files required to build subsystem.
+ 
+-OBJS=\
+- cfe_sb_task.o cfe_sb_api.o cfe_sb_priv.o cfe_sb_init.o cfe_sb_buf.o \
+- cfe_sb_util.o ccsds.o
++C_OBJS=\
++ cfe_sb_task.o cfe_sb_api.o cfe_sb_api_mod.o cfe_sb_priv.o cfe_sb_init.o \
++ cfe_sb_buf.o cfe_sb_util.o ccsds.o
++
++CPP_OBJS = \
++ cfe_sb_api_dds.o SBDcps.o SBDcps_impl.o SB.o SBSplDcps.o\
++ DataReaderListenerImpl.o
++
++OBJS = $(C_OBJS) $(CPP_OBJS)
+ 
+ #==============================================================================
+ # Source files required to build subsystem; used to generate dependencies.
+ 
+-SOURCES = $(OBJS:.o=.c)
++SOURCES = $(C_OBJS:.o=.c) $(CPP_OBJS:.o=.cpp)
+ 
+diff --git a/cfe/fsw/cfe-core/src/sb/cfe_sb_api.c b/cfe/fsw/cfe-core/src/sb/cfe_sb_api.c
+index 7528c60..5f47f3b 100644
+--- a/cfe/fsw/cfe-core/src/sb/cfe_sb_api.c
++++ b/cfe/fsw/cfe-core/src/sb/cfe_sb_api.c
+@@ -1,3 +1,5 @@
++/* Fully unmodified portions of the original cfe_sb_api.c */
++
+ /******************************************************************************
+ ** File: cfe_sb_api.c
+ **
+@@ -574,6 +576,7 @@ int32 CFE_SB_Subscribe(CFE_SB_MsgId_t   MsgId,
+ }/* end CFE_SB_Subscribe */
+ 
+ 
++#if 0
+ /******************************************************************************
+ ** Name:    CFE_SB_SubscribeFull
+ **
+@@ -766,6 +769,7 @@ int32  CFE_SB_SubscribeFull(CFE_SB_MsgId_t   MsgId,
+     return CFE_SUCCESS;
+ 
+ }/* end CFE_SB_SubscribeFull */
++#endif
+ 
+ 
+ /******************************************************************************
+@@ -1094,6 +1098,7 @@ int32  CFE_SB_PassMsg(CFE_SB_Msg_t    *MsgPtr)
+ 
+ 
+ 
++#if 0
+ /******************************************************************************
+ ** Name:    CFE_SB_SendMsgFull
+ **
+@@ -1419,6 +1424,7 @@ int32  CFE_SB_SendMsgFull(CFE_SB_Msg_t    *MsgPtr,
+     return CFE_SUCCESS;
+ 
+ }/* end CFE_SB_SendMsgFull */
++#endif
+ 
+ 
+ 
+diff --git a/cfe/fsw/cfe-core/src/sb/cfe_sb_init.c b/cfe/fsw/cfe-core/src/sb/cfe_sb_init.c
+index f3309c2..5c364ed 100644
+--- a/cfe/fsw/cfe-core/src/sb/cfe_sb_init.c
++++ b/cfe/fsw/cfe-core/src/sb/cfe_sb_init.c
+@@ -158,7 +158,12 @@ int32 CFE_SB_EarlyInit (void) {
+ 
+    CFE_SB.ZeroCopyTail = NULL;
+ 
+-    return Stat;
++   Stat = CFE_SB_DDSInit();
++   if (Stat != CFE_SUCCESS) {
++       return Stat;
++   }
++
++   return Stat;
+ 
+ }/* end CFE_SB_EarlyInit */
+ 
+diff --git a/cfe/fsw/cfe-core/src/sb/cfe_sb_priv.h b/cfe/fsw/cfe-core/src/sb/cfe_sb_priv.h
+index 043a0a6..dc40d82 100644
+--- a/cfe/fsw/cfe-core/src/sb/cfe_sb_priv.h
++++ b/cfe/fsw/cfe-core/src/sb/cfe_sb_priv.h
+@@ -400,6 +400,7 @@ CFE_SB_DestinationD_t *CFE_SB_GetDestinationBlk(void);
+ int32 CFE_SB_PutDestinationBlk(CFE_SB_DestinationD_t *Dest);
+ int32 CFE_SB_AddDest(uint16 RtgTblIdx, CFE_SB_DestinationD_t *Dest);
+ int32 CFE_SB_RemoveDest(uint16 RtgTblIdx, CFE_SB_DestinationD_t *Dest);
++int CFE_SB_DDSInit(void);
+ 
+ /*
+  * External variables private to the software bus module
+diff --git a/psp/fsw/pc-linux/make/link-rules.mak b/psp/fsw/pc-linux/make/link-rules.mak
+index 929f299..3e98213 100644
+--- a/psp/fsw/pc-linux/make/link-rules.mak
++++ b/psp/fsw/pc-linux/make/link-rules.mak
+@@ -26,9 +26,16 @@ LDFLAGS = -m32 -Wl,-export-dynamic
+ LIBS =  -lm -lpthread -ldl -lrt
+ ##
+ ## Uncomment the following line to link in C++ standard libs
+-## LIBS += -lstdc++
++LIBS += -lstdc++
+ ## 
+ 
++# DDS libraries
++LIBS += -l"SBCommon" \
++ -l"ddsdatabase" -l"dcpsgapi" -l"dcpssacpp" -l"ddsos" -l"ddskernel" \
++ -ldl \
++ -lrt
++LDFLAGS += -L$(OSPL_HOME)/lib
++
+ ##
+ ## cFE Core Link Rule
+ ## 

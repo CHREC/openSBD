@@ -30,31 +30,50 @@
 # Enter target 21 (for x86.linux-release) when prompted during OpenSplice configure
 #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
 
-SBD_HOME=$PWD/DDS
-JARVIS_HOME=$1
-
 set -e -x
-
 
 #### #### #### 
 # Git & Clone 
 #### #### #### 
 
-set -e -x
-
 # Download open source cFE and OpenSplice (these are the latest available releases currently)
 # git clone -b '6.5.0a' https://github.com/nasa/cfe.git
 
-# git clone -b icarous-support https://github.com/CHREC/openSBD
-
-#### cd openSBD
 #### git clone --recurse-submodules https://github.com/nasa/icarous.git
 
-if [[ "$(basename $1)" == "OSPL" ]]
-then 
-	cd DDS
-	echo -e "\n Cloning Repos...\n"
- 	git clone -b 'OSPL_V6_9_190403OSS_RELEASE' --depth 1 https://github.com/ADLINK-IST/opensplice.git
+#### cd icarous
+
+#### git clone -b DDS https://github.com/CHREC/openSBD DDS
+
+JARVIS_HOME=$1
+DDS_HOME=$PWD/DDS
+
+
+if [[ "$(basename $2)" == "OSPL" ]]
+	then 
+		cd DDS
+		echo -e "\n Cloning Repos...\n"
+ 		git clone -b 'OSPL_V6_9_190403OSS_RELEASE' --depth 1 https://github.com/ADLINK-IST/opensplice.git
+
+		echo -e "\n ... Building OSPL...\n"
+
+		#### #### #### #####
+		# Build OpenSplice #
+		#### #### #### ##### 
+
+		cd $DDS_HOME/opensplice
+		export INCLUDE_SERVICES_CMSOAP=no
+		echo '15' | ./configure 
+		# [15:x86_64.linux-release] [21: x86] ## ~source
+		make
+		make install
+fi
+
+echo -e "\n ... Sourcing OSPL vars...\n"
+
+export OSPL_HOME="$DDS_HOME/opensplice/install/HDE/x86_64.linux"
+echo -e "OSPL_HOME=${OSPL_HOME}\n\n"
+source $OSPL_HOME/release.com	# opensplice/install/HDE/x86_64.linux/release.com
 
 #### #### #### #### #### #### 
 # Configure and Set ICAROUS
@@ -69,68 +88,58 @@ source SetEnv.sh
 echo -e "\n JAVA_HOME=${JAVA_HOME}"
 echo -e "OSAL_HOME=${OSAL_HOME}"
 echo -e "PLEXIL_HOME=${PLEXIL_HOME}"
+echo -e "OSPL_HOME=${OSPL_HOME}"
+
+echo -e "\n\n\n"
 
 cd  $JARVIS_HOME
 rm -rf build
 mkdir build
 
-echo -e "\n ... Building OSPL...\n"
-
-#### #### #### #### 
-# Build OpenSplice
-#### #### #### #### 
-
-cd $SBD_HOME/opensplice
-export INCLUDE_SERVICES_CMSOAP=no
-./configure # Enter target 15 (x86_64.linux-release) [21 is x86] # no source
-make
-make install
-
-echo -e "\n ... Sourcing OSPL vars...\n"
-
-export OSPL_HOME="$SBD_HOME/opensplice/install/HDE/x86_64.linux"
-echo -e "OSPL_HOME=${OSPL_HOME}\n\n"
-source $OSPL_HOME/release.com	# opensplice/install/HDE/x86_64.linux/release.com
-
 #### #### #### #### 
 # Patch and Build
 #### #### #### #### 
 
-cp $SBD_HOME/patches/opensplice64.patch $SBD_HOME/opensplice
-cd $SBD_HOME/opensplice
+cp $DDS_HOME/patches/opensplice64.patch $DDS_HOME/opensplice
+cd $DDS_HOME/opensplice
 
-# patch -Np1 -i $SBD_HOME/patches/opensplice64.patch
+patch -Np1 -i $DDS_HOME/patches/opensplice64.patch
 
 echo -e "\n ... Building SBD Components...\n"
 
-cd $SBD_HOME/code
-#make
+cd $DDS_HOME/code
+make
 
 cp *.{c,cpp,h} $JARVIS_HOME/cFS/cfe/fsw/cfe-core/src/sb
-cp $SBD_HOME/code/libSBCommon.so $OSPL_HOME/lib
-cp $SBD_HOME/code/rtps.ini $JARVIS_HOME/cFS/bin/cpu1 # $JARVIS_HOME/build/cpu1/exe
+cp $DDS_HOME/code/libSBCommon.so $OSPL_HOME/lib
+cp $DDS_HOME/code/rtps.ini $JARVIS_HOME/cFS/bin/cpu1 
 
 cd $JARVIS_HOME/cFS/cfe
 
 echo -e "\n ... Patching cFS ...\n"
 
-cp $SBD_HOME/patches/sbd64.patch $JARVIS_HOME/cFS/
+cp $DDS_HOME/patches/sbd64.patch $JARVIS_HOME/cFS/
 cd $JARVIS_HOME/cFS/
-#patch -Np1 -i $SBD_HOME/patches/sbd64.patch
+
+patch -Np1 -i $DDS_HOME/patches/sbd64.patch
+
+echo -e "\n ... Reticulating cFS CMake ...\n"
 
 cd $JARVIS_HOME/cFS/cfe/
-#patch -Np1 -i $SBD_HOME/patches/cfe__cmake__target__CMakeLists.txt.patch
-#patch -Np1 -i $SBD_HOME/patches/cfe__fsw__cfe-core__CMakeLists.txt.patch
 
-echo -e "\n ... Entering ICAROUS build ...\n"
+patch -Np1 -i $DDS_HOME/patches/cfe__cmake__target__CMakeLists.txt.patch
+
+patch -Np1 -i $DDS_HOME/patches/cfe__fsw__cfe-core__CMakeLists.txt.patch
+
+echo -e "\n ... Entering JARVIS build ...\n"
 
 cd $JARVIS_HOME/build
-cp $SBD_HOME/code/SB.idl $JARVIS_HOME/cFS/cfe/fsw/cfe-core/src/sb
+cp $DDS_HOME/code/SB.idl $JARVIS_HOME/cFS/cfe/fsw/cfe-core/src/sb
 
 cmake -DCMAKE_MODULE_PATH=$JARVIS_HOME/CMake ..
 make cpu1-install -j9
 
 cd $JARVIS_HOME/cFS/bin/cpu1/cf
 rm cfe_es_startup.scr # cpu1_cfe_es_startup.scr
-ln -s $SBD_HOME/scenarios/JARVIS.scr cfe_es_startup.scr
+ln -s $DDS_HOME/scenarios/JARVIS.scr cfe_es_startup.scr
 

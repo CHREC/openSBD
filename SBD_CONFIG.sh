@@ -30,31 +30,39 @@
 # Enter target 21 (for x86.linux-release) when prompted during OpenSplice configure
 #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
 
-SBD_HOME=$PWD
+SBD_HOME=$PWD/DDS
+JARVIS_HOME=$1
 
-# Download open source cFE and OpenSplice (these are the latest available releases currently)
-# git clone -b '6.5.0a' https://github.com/nasa/cfe.git
+set -e -x
+
 
 #### #### #### 
 # Git & Clone 
 #### #### #### 
 
-echo -e "\n Cloning Repos...\n"
+set -e -x
 
-#### git clone https://github.com/CHREC/openSBD
+# Download open source cFE and OpenSplice (these are the latest available releases currently)
+# git clone -b '6.5.0a' https://github.com/nasa/cfe.git
+
+# git clone -b icarous-support https://github.com/CHREC/openSBD
+
 #### cd openSBD
-git clone --recurse-submodules https://github.com/nasa/icarous.git
-git clone -b 'OSPL_V6_9_190403OSS_RELEASE' --depth 1 https://github.com/ADLINK-IST/opensplice.git
-#### git clone -b '1d0b2e660dfc332d786eef44bf8f608c9319af57' https://gitlab.larc.nasa.gov/larc-nia-fm/icarous
+#### git clone --recurse-submodules https://github.com/nasa/icarous.git
+
+if [[ "$(basename $1)" == "OSPL" ]]
+then 
+	cd DDS
+	echo -e "\n Cloning Repos...\n"
+ 	git clone -b 'OSPL_V6_9_190403OSS_RELEASE' --depth 1 https://github.com/ADLINK-IST/opensplice.git
 
 #### #### #### #### #### #### 
 # Configure and Set ICAROUS
 #### #### #### #### #### #### 
 
-cd icarous
+cd $JARVIS_HOME
 
 echo -e "\n ... Setting Envrionment [Check Your Paths!]...\n"
-# JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.212.b04-0.el7_6.x86_64/include
 
 source SetEnv.sh
 
@@ -62,8 +70,9 @@ echo -e "\n JAVA_HOME=${JAVA_HOME}"
 echo -e "OSAL_HOME=${OSAL_HOME}"
 echo -e "PLEXIL_HOME=${PLEXIL_HOME}"
 
+cd  $JARVIS_HOME
+rm -rf build
 mkdir build
-
 
 echo -e "\n ... Building OSPL...\n"
 
@@ -73,73 +82,55 @@ echo -e "\n ... Building OSPL...\n"
 
 cd $SBD_HOME/opensplice
 export INCLUDE_SERVICES_CMSOAP=no
-source ./configure # Enter target 21 (x86.linux-release)
+./configure # Enter target 15 (x86_64.linux-release) [21 is x86] # no source
 make
 make install
 
 echo -e "\n ... Sourcing OSPL vars...\n"
 
-export OSPL_HOME="$SBD_HOME/opensplice/install/HDE/x86.linux"
+export OSPL_HOME="$SBD_HOME/opensplice/install/HDE/x86_64.linux"
 echo -e "OSPL_HOME=${OSPL_HOME}\n\n"
-source $OSPL_HOME/release.com
+source $OSPL_HOME/release.com	# opensplice/install/HDE/x86_64.linux/release.com
 
 #### #### #### #### 
 # Patch and Build
 #### #### #### #### 
 
-cp $SBD_HOME/patches/sbd.patch opensplice
+cp $SBD_HOME/patches/opensplice64.patch $SBD_HOME/opensplice
 cd $SBD_HOME/opensplice
 
-patch -Np1 -i $SBD_HOME/patches/opensplice.patch
+# patch -Np1 -i $SBD_HOME/patches/opensplice64.patch
 
 echo -e "\n ... Building SBD Components...\n"
 
 cd $SBD_HOME/code
-make
-cp *.{c,cpp,h} $SBD_HOME/icarous/cFS/cFE/cfe/fsw/cfe-core/src/sb
-cp $SBD_HOME/code/libSBCommon.so $OSPL_HOME/lib
-cp $SBD_HOME/code/rtps.ini $SBD_HOME/icarous/build/cpu1/exe
+#make
 
-cd $SBD_HOME/icarous/cFS/cFE
-# git submodule update --init osal
+cp *.{c,cpp,h} $JARVIS_HOME/cFS/cfe/fsw/cfe-core/src/sb
+cp $SBD_HOME/code/libSBCommon.so $OSPL_HOME/lib
+cp $SBD_HOME/code/rtps.ini $JARVIS_HOME/cFS/bin/cpu1 # $JARVIS_HOME/build/cpu1/exe
+
+cd $JARVIS_HOME/cFS/cfe
 
 echo -e "\n ... Patching cFS ...\n"
 
-cp $SBD_HOME/patches/sbd.patch $SBD_HOME/icarous/cFS/cFE/
-cd $SBD_HOME/icarous/cFS/cFE/
+cp $SBD_HOME/patches/sbd64.patch $JARVIS_HOME/cFS/
+cd $JARVIS_HOME/cFS/
+#patch -Np1 -i $SBD_HOME/patches/sbd64.patch
 
-
-patch -Np1 -i $SBD_HOME/patches/sbd.patch
-
-# source setvars.sh
-#### cd $SBD_HOME/icarous/build
-
-cp $SBD_HOME/patches/sbd.patch $SBD_HOME/icarous/cFS/cFE/
-cd $SBD_HOME/icarous/cFS/cFE/ 
-
-patch -Np1 -i $SBD_HOME/patches/cfe__cmake__target__CMakeLists.txt.patch
-patch -Np1 -i $SBD_HOME/patches/cfe__fsw__cfe-core__CMakeLists.txt.patch
+cd $JARVIS_HOME/cFS/cfe/
+#patch -Np1 -i $SBD_HOME/patches/cfe__cmake__target__CMakeLists.txt.patch
+#patch -Np1 -i $SBD_HOME/patches/cfe__fsw__cfe-core__CMakeLists.txt.patch
 
 echo -e "\n ... Entering ICAROUS build ...\n"
 
-cd $SBD_HOME/icarous/build
-cp $SBD_HOME/code/SB.idl $SBD_HOME/icarous/cFS/cFE/cfe/fsw/cfe-core/src/sb
+cd $JARVIS_HOME/build
+cp $SBD_HOME/code/SB.idl $JARVIS_HOME/cFS/cfe/fsw/cfe-core/src/sb
 
-# cmake CMAKE_PREFIX_PATH=$OSPL_HOME ..
+cmake -DCMAKE_MODULE_PATH=$JARVIS_HOME/CMake ..
+make cpu1-install -j9
 
-cmake -DCMAKE_MODULE_PATH=$SBD_HOME/icarous/CMake ..
-make cpu1-install #-j9
+cd $JARVIS_HOME/cFS/bin/cpu1/cf
+rm cfe_es_startup.scr # cpu1_cfe_es_startup.scr
+ln -s $SBD_HOME/scenarios/JARVIS.scr cfe_es_startup.scr
 
-#### cp $SBD_HOME/code/rtps.ini $SBD_HOME/icarous/cFS/bin
-# sudo sysctl fs.mqueue.msg_max=1000 #
-#### cd $SBD_HOME/icarous/bin
-#### ./core-cpu1 --scid=88
-
-#### #### 
-# Run
-#### #### 
-
-#cd exe
-#cp $SBD_HOME/code/rtps.ini $SBD_HOME/cfe/build/cpu1/exe
-#./core-linux.bin
-			

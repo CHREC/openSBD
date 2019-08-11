@@ -1,4 +1,4 @@
-diff --git a/cfe/fsw/cfe-core/CMakeLists.txt b/cfe/fsw/cfe-core/CMakeLists.txt
+diff --git a/cFE/fsw/cfe-core/CMakeLists.txt b/cFE/fsw/cfe-core/CMakeLists.txt
 index dfe3450..29e27f1 100644
 
 # Copyright (c) 2018 NSF Center for Space, High-performance, and Resilient Computing (SHREC)
@@ -19,8 +19,8 @@ index dfe3450..29e27f1 100644
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
 # OF SUCH DAMAGE.
 
---- a/cfe/fsw/cfe-core/CMakeLists.txt
-+++ b/cfe/fsw/cfe-core/CMakeLists.txt
+--- a/cFE/fsw/cfe-core/CMakeLists.txt
++++ b/cFE/fsw/cfe-core/CMakeLists.txt
 @@ -24,8 +24,32 @@ foreach(MODULE ${CFE_CORE_MODULES} config shared)
    aux_source_directory(src/${MODULE} CFE_ALL_MODULE_SRCS)
  endforeach(MODULE ${CFE_CORE_MODULES})

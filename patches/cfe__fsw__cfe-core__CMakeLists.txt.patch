@@ -21,7 +21,7 @@ index dfe3450..29e27f1 100644
 
 --- a/cFE/fsw/cfe-core/CMakeLists.txt
 +++ b/cFE/fsw/cfe-core/CMakeLists.txt
-@@ -24,8 +24,32 @@ foreach(MODULE ${CFE_CORE_MODULES} config shared)
+@@ -35,8 +35,31 @@ foreach(MODULE ${CFE_CORE_MODULES} config shared)
    aux_source_directory(src/${MODULE} CFE_ALL_MODULE_SRCS)
  endforeach(MODULE ${CFE_CORE_MODULES})
  

@@ -24,12 +24,12 @@ INCLUDES+=-I$(OSPL_HOME)/include/sys
 
 # C++ Compiler settings.
 CXX=g++
-CXXFLAGS=-g -c -fPIC
+CXXFLAGS=-g -c -fPIC -m32
 CPPFLAGS=$(INCLUDES)
 
 # Linker settings.
 LD_SO=$(CXX)
-LD_FLAGS=-shared
+LD_FLAGS=-shared -m32
 LD_LIBS=-lstdc++
 
 TARGET=libSBCommon.so

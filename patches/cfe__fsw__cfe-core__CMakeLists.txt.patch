@@ -51,6 +51,7 @@ index dfe3450..29e27f1 100644
 +        )
 +##### END SBD
 +
- if(ENABLE_DATA_DICTIONARY)
-   target_link_libraries(${CFE_CORE_TARGET} msglib cfecore_datadict)
- endif(ENABLE_DATA_DICTIONARY)
+ if (ENABLE_UNIT_TESTS)
+  add_subdirectory(unit-test)
+ endif (ENABLE_UNIT_TESTS) 
+

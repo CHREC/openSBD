@@ -21,7 +21,7 @@ index dfe3450..29e27f1 100644
 
 --- a/cFE/fsw/cfe-core/CMakeLists.txt
 +++ b/cFE/fsw/cfe-core/CMakeLists.txt
-@@ -35,8 +35,31 @@ foreach(MODULE ${CFE_CORE_MODULES} config shared)
+@@ -23,8 +23,31 @@ foreach(MODULE ${CFE_CORE_MODULES} config shared)
    aux_source_directory(src/${MODULE} CFE_ALL_MODULE_SRCS)
  endforeach(MODULE ${CFE_CORE_MODULES})
  
@@ -51,7 +51,7 @@ index dfe3450..29e27f1 100644
 +        )
 +##### END SBD
 +
- if (ENABLE_UNIT_TESTS)
-  add_subdirectory(unit-test)
- endif (ENABLE_UNIT_TESTS) 
 
+ if(ENABLE_DATA_DICTIONARY)
+  target_link_libraries(${CFE_CORE_TARGET} msglib cfecore_datadict)
+ endif(ENABLE_DATA_DICTIONARY)

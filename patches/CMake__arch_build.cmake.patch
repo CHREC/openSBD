@@ -1,0 +1,39 @@
+diff --git a/CMake/arch_build.cmake b/CMake/arch_build.cmake
+index 6072186..6335ab2 100644
+--- a/CMake/arch_build.cmake
++++ b/CMake/arch_build.cmake
+@@ -23,7 +23,8 @@ enable_testing()
+ function(add_psp_module MOD_NAME MOD_SRC_FILES)
+ 
+   # Include the PSP shared directory so it can get to cfe_psp_module.h
+-  include_directories(${MISSION_SOURCE_DIR}/psp/fsw/shared)
++  # include_directories(${MISSION_SOURCE_DIR}/psp/fsw/shared) # CLM
++  include_directories(${CMAKE_SOURCE_DIR}/cFS/psp/fsw/shared)
+   
+   # Create the module
+   add_library(${MOD_NAME} STATIC ${MOD_SRC_FILES} ${ARGN})
+@@ -258,10 +259,12 @@ function(process_arch SYSVAR)
+   endforeach()
+        
+   # Include any specific compiler flags or config from the selected PSP
+-  include(${MISSION_SOURCE_DIR}/psp/fsw/${CFE_SYSTEM_PSPNAME}/make/build_options.cmake)
++  # include(${MISSION_SOURCE_DIR}/psp/fsw/${CFE_SYSTEM_PSPNAME}/make/build_options.cmake) # CLM
++  include_directories(${CMAKE_SOURCE_DIR}/cFS/psp/fsw/${CFE_SYSTEM_PSPNAME}/make/build_options.cmake)
+     
+   # Configure OSAL target first, as it also determines important compiler flags
+-  add_subdirectory(${MISSION_SOURCE_DIR}/osal osal)
++ # add_subdirectory(${MISSION_SOURCE_DIR}/osal osal) # CLM
++  add_subdirectory(${CMAKE_SOURCE_DIR}/cFS/osal osal)
+   
+   # The OSAL displays its selected OS, so it is logical to display the selected PSP
+   # This can help with debugging if things go wrong.
+@@ -388,7 +391,8 @@ function(process_arch SYSVAR)
+   # The naming convention allows more than one PSP per arch,
+   # however in practice this gets too complicated so it is
+   # currently a 1:1 relationship.  This may change at some point.
+-  add_subdirectory(${MISSION_SOURCE_DIR}/psp psp/${CFE_SYSTEM_PSPNAME})
++  # add_subdirectory(${MISSION_SOURCE_DIR}/psp psp/${CFE_SYSTEM_PSPNAME}) # CLM
++  add_subdirectory(${CMAKE_SOURCE_DIR}/cFS/psp/ psp/${CFE_SYSTEM_PSPNAME})
+         
+   # Process each app that is used on this system architecture
+   foreach(APP ${TGTSYS_${SYSVAR}_APPS})

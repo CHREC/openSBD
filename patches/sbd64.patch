@@ -2,7 +2,9 @@ diff --git a/cFE/fsw/cfe-core/src/inc/cfe_sb_events.h b/cFE/fsw/cfe-core/src/inc
 index e7b0d72..1e9d2a5 100644
 --- a/cFE/fsw/cfe-core/src/inc/cfe_sb_events.h
 +++ b/cFE/fsw/cfe-core/src/inc/cfe_sb_events.h
-@@ -789,6 +789,10 @@
+@@ -839,6 +839,10 @@
+# @@ -789,6 +789,10 @@
+
  **/
  #define CFE_SB_DEL_PIPE_ERR2_EID        54
  
@@ -49,10 +51,10 @@ index b283a99..60998a0 100644
  
 -OBJS=\
 - cfe_sb_task.o cfe_sb_api.o cfe_sb_priv.o cfe_sb_init.o cfe_sb_buf.o \
-- cfe_sb_util.o ccsds.o
+- cfe_sb_util.o ccsds.o cfe_sb_msg_id_util.o
 +C_OBJS=\
 + cfe_sb_task.o cfe_sb_api.o cfe_sb_api_mod.o cfe_sb_priv.o cfe_sb_init.o \
-+ cfe_sb_buf.o cfe_sb_util.o ccsds.o
++ cfe_sb_buf.o cfe_sb_util.o ccsds.o cfe_sb_msg_id_util.o
 +
 +CPP_OBJS = \
 + cfe_sb_api_dds.o SBDcps.o SBDcps_impl.o SB.o SBSplDcps.o\
